@@ -1,6 +1,6 @@
 {
   "name": "vettedgaps-skill",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pain Radar (vettedgaps.com) skill for Claude Code + MCP server for Claude Desktop / Cursor / Windsurf. Search validated user pain points, save favorites, post comments — without leaving your IDE.",
   "type": "module",
   "bin": "./cli.js",

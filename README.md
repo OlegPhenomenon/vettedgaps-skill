@@ -1,43 +1,85 @@
 # vettedgaps-skill
 
-Claude Code skill for [Pain Radar](https://vettedgaps.com) — search validated user pain points, save favorites, and post comments without leaving your IDE.
+Bring [Pain Radar](https://vettedgaps.com) into your AI: search validated user pain points, save favorites, post comments — without leaving your IDE.
 
-## Install (one command)
+**Two ways to use:**
+
+- **Claude Code** → markdown skill (`SKILL.md` in `~/.claude/skills/vettedgaps/`)
+- **Claude Desktop / Cursor / Windsurf** → MCP server (`npx vettedgaps-skill mcp`)
+
+Both share the same npm package and the same Pain Radar API auth.
+
+---
+
+## Claude Code skill
 
 ```bash
 npx vettedgaps-skill
 ```
 
-This copies the skill to `~/.claude/skills/vettedgaps/` (user-level, available in all projects).
+Copies the skill to `~/.claude/skills/vettedgaps/` (user-level, available in all projects). Add `--project` for `./.claude/skills/vettedgaps/`. If the target already exists, you'll get a prompt (`overwrite / skip / cancel`, default `cancel`). Use `--force` / `-y` to skip the prompt.
 
-Add `--project` to install into the current project's `.claude/skills/vettedgaps/` instead.
+Then:
 
-If the target directory already exists you'll be prompted: `overwrite / skip / cancel` (default `cancel`). Use `--force` or `-y` to skip the prompt and overwrite (useful in CI / scripts).
+1. Generate an API token at [vettedgaps.com/api_tokens](https://vettedgaps.com/api_tokens) (Pro subscription required).
+2. `export VETTED_GAPS_TOKEN=<your-token>` (add to `~/.zshrc` for persistence).
+3. Restart Claude Code or open a new session.
 
-## Setup
+Ask Claude: *"find me 5 addon-opportunity ideas for shopify with score above 0.5"*.
 
-1. Generate an API token at [vettedgaps.com/api_tokens](https://vettedgaps.com/api_tokens) (requires Pro subscription).
-2. Export it in your shell:
-   ```bash
-   export VETTED_GAPS_TOKEN=<your-token>
-   ```
-   Add this line to `~/.zshrc` (or `~/.bashrc`) to make it permanent.
-3. Restart Claude Code or open a new session — the skill will be auto-loaded.
+## MCP server <a id="mcp-server"></a>
 
-## Try it
+For Claude Desktop, Cursor, Windsurf, or any other MCP-compatible client. Same auth model — `VETTED_GAPS_TOKEN` from your Pro account.
 
-In Claude Code, ask:
+### Claude Desktop
 
-- *"Find me 5 addon-opportunity ideas for Shopify with score above 0.5."*
-- *"Show me the details of pain card #310."*
-- *"Save card #310 to favorites with note 'building a chrome extension for this'."*
-- *"Comment on #310: 'starting to prototype this'."*
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
-The skill knows how to call the [Pain Radar API](https://vettedgaps.com/api/v1) — search, get details, favorite, comment.
+```json
+{
+  "mcpServers": {
+    "vettedgaps": {
+      "command": "npx",
+      "args": ["-y", "vettedgaps-skill", "mcp"],
+      "env": { "VETTED_GAPS_TOKEN": "<your-token>" }
+    }
+  }
+}
+```
+
+Restart Claude Desktop (Cmd+Q + open). Ask: *"what tools do I have from vettedgaps?"*
+
+### Cursor
+
+Edit `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project). Same `mcpServers` block as above.
+
+### Windsurf
+
+Edit `~/.codeium/windsurf/mcp_config.json`. Same `mcpServers` block as above.
+
+### Available MCP tools
+
+| Tool | Description |
+|---|---|
+| `search_pains` | Search by niche, min_score, opportunity_type, actionable shortcut. Paginated via cursor. |
+| `get_pain_card` | Full card details with score components and evidence quotes. |
+| `favorite_pain` | Save to favorites (idempotent — repeat = 200 OK). |
+| `comment_on_pain` | Post a comment; optional reply to top-level via parent_comment_id. |
+
+### Testing the MCP server locally
+
+```bash
+# List tools (any non-empty VETTED_GAPS_TOKEN will start the server)
+VETTED_GAPS_TOKEN=test npx -y @modelcontextprotocol/inspector --cli \
+  npx vettedgaps-skill mcp --method tools/list
+
+# Real call (needs real Pro token)
+VETTED_GAPS_TOKEN=<real-token> npx -y @modelcontextprotocol/inspector --cli \
+  npx vettedgaps-skill mcp --method tools/call --tool-name search_pains \
+  --tool-arg niche=shopify --tool-arg per_page=2
+```
 
 ## Manual install (without npx)
-
-If you prefer to inspect or vendor the skill files yourself:
 
 ```bash
 git clone git@github.com:OlegPhenomenon/vettedgaps-skill.git
@@ -45,25 +87,18 @@ cp -r vettedgaps-skill/skill ~/.claude/skills/vettedgaps
 export VETTED_GAPS_TOKEN=<your-token>
 ```
 
-That's it — same result as `npx vettedgaps-skill`.
-
-## What's inside
-
-```
-~/.claude/skills/vettedgaps/
-└── SKILL.md   ← instructions for Claude (API endpoints, auth, error handling, examples)
-```
-
-That's the entire skill — one markdown file. Claude reads it on session start and knows how to use the Pain Radar API.
+For MCP — point your client's config to `node /path/to/vettedgaps-skill/mcp-server.js` instead of `npx`.
 
 ## API reference
 
-See [`skill/SKILL.md`](./skill/SKILL.md) for the full operation list and request/response shapes. Or browse the live endpoints (requires token):
+See [`skill/SKILL.md`](./skill/SKILL.md) for the full operation list (same operations exposed via MCP, same endpoints).
 
-- `GET https://vettedgaps.com/api/v1/pains` — search
+Underlying API:
+
+- `GET https://vettedgaps.com/api/v1/pains` — search (with `niche`, `min_score`, `opportunity_type`, `actionable`, `cursor` filters)
 - `GET https://vettedgaps.com/api/v1/pains/:id` — get card with evidence
-- `POST https://vettedgaps.com/api/v1/favorites` — save
-- `POST https://vettedgaps.com/api/v1/pains/:id/comments` — comment
+- `POST https://vettedgaps.com/api/v1/favorites` — save (idempotent)
+- `POST https://vettedgaps.com/api/v1/pains/:id/comments` — comment (with optional `parent_comment_id` for replies)
 
 Rate limit: 60 requests per minute per token. Error envelope: `{"error": {"code": "...", "message": "..."}}`.
 
@@ -73,8 +108,9 @@ MIT — see [LICENSE](./LICENSE).
 
 ## Links
 
-- Pain Radar website: https://vettedgaps.com
+- Pain Radar: https://vettedgaps.com
 - Generate API token: https://vettedgaps.com/api_tokens
 - Pricing: https://vettedgaps.com/pricing
 - Skill repo: https://github.com/OlegPhenomenon/vettedgaps-skill
 - Pain Radar source: https://github.com/OlegPhenomenon/pain-radar
+- MCP spec: https://modelcontextprotocol.io

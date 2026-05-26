@@ -1,0 +1,25 @@
+=== T-2: tools/list ===
+      "name": "search_pains",
+      "description": "Search Pain Radar for validated user pain points on SaaS marketplaces. Use when the user wants to discover product opportunities, browse pain cards by niche (shopify, notion, atlassian, etc), filter by score, or find addon/workflow ideas. Returns paginated cards with score, opportunity_type, and a short summary. To get more results, call again with `cursor` from previous response's `meta.next_cursor`.",
+            "description": "Marketplace slug (shopify, notion, atlassian, etc)"
+            "description": "Minimum score filter, 0..1"
+            "description": "Filter by opportunity classification"
+            "description": "If true, excludes vendor_only cards. Use for miniapp/extension ideas."
+            "description": "Page size, default 20, max 50"
+            "description": "Pagination cursor from previous response's meta.next_cursor"
+      "name": "get_pain_card",
+      "description": "Fetch full details of a single pain card by ID — title, description, score_components, and evidence array with quoted Reddit/forum posts and source URLs. Use after search_pains to dig into a specific result before favoriting or commenting.",
+            "description": "Pain card ID"
+      "name": "favorite_pain",
+      "description": "Save a pain card to the user's favorites for later. Idempotent — repeat calls return 200 with existing record (note is NOT updated on repeat). Use when the user says they want to save, bookmark, or star a pain card.",
+            "description": "Pain card ID to favorite"
+            "description": "Optional personal note, max 1000 chars. Only saved on first favorite, ignored on idempotent repeats."
+      "name": "comment_on_pain",
+      "description": "Post a comment on a pain card. Optionally reply to an existing top-level comment via parent_comment_id (must be on the same pain card and not itself a reply). Use when the user says they want to comment, post, or reply on a pain.",
+            "description": "Pain card ID to comment on"
+            "description": "Comment body, 1..10000 chars (markdown supported)"
+            "description": "ID of a top-level comment on the same card to reply to"
+
+=== T-4: no-token exit 1 ===
+VETTED_GAPS_TOKEN env var is required. Get one at https://vettedgaps.com/api_tokens
+exit=1

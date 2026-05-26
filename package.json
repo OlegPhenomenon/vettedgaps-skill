@@ -1,28 +1,39 @@
 {
   "name": "vettedgaps-skill",
-  "version": "0.1.0",
-  "description": "Claude Code skill for Pain Radar (vettedgaps.com) — search validated user pain points, save favorites, post comments without leaving your IDE.",
+  "version": "0.2.0",
+  "description": "Pain Radar (vettedgaps.com) skill for Claude Code + MCP server for Claude Desktop / Cursor / Windsurf. Search validated user pain points, save favorites, post comments — without leaving your IDE.",
   "type": "module",
   "bin": "./cli.js",
   "files": [
     "cli.js",
+    "installer.js",
+    "mcp-server.js",
     "skill/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test:cli": "node cli.js"
+    "test:cli": "node cli.js",
+    "test:mcp": "node mcp-server.js"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0"
+    "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
   },
   "keywords": [
     "claude",
     "claude-code",
     "claude-skill",
+    "claude-desktop",
+    "cursor",
+    "windsurf",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "ai",
     "saas",
     "product-discovery",

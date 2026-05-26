@@ -1,0 +1,43 @@
+{
+  "name": "vettedgaps-skill",
+  "version": "0.1.0",
+  "description": "Claude Code skill for Pain Radar (vettedgaps.com) — search validated user pain points, save favorites, post comments without leaving your IDE.",
+  "type": "module",
+  "bin": "./cli.js",
+  "files": [
+    "cli.js",
+    "skill/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test:cli": "node cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "claude-skill",
+    "ai",
+    "saas",
+    "product-discovery",
+    "pain-points",
+    "vettedgaps",
+    "pain-radar"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OlegPhenomenon/vettedgaps-skill.git"
+  },
+  "homepage": "https://vettedgaps.com",
+  "bugs": {
+    "url": "https://github.com/OlegPhenomenon/vettedgaps-skill/issues"
+  },
+  "author": "OlegPhenomenon",
+  "license": "MIT"
+}

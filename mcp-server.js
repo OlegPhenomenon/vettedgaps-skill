@@ -1,9 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod"
-import { readFileSync } from "node:fs"
-import { join, dirname } from "node:path"
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs"
+import { join, dirname, isAbsolute } from "node:path"
 import { fileURLToPath } from "node:url"
+import { homedir } from "node:os"
 
 const pkgRoot = dirname(fileURLToPath(import.meta.url))
 const version = JSON.parse(readFileSync(join(pkgRoot, "package.json"), "utf8")).version
@@ -148,6 +149,85 @@ server.registerTool(
       )
     } catch (e) {
       return errResp(`comment_on_pain failed: ${e.message}`)
+    }
+  }
+)
+
+function parseFilenameFromContentDisposition(header) {
+  if (!header) return null
+  const m = /filename="?([^";]+)"?/.exec(header)
+  return m ? m[1] : null
+}
+
+function resolveOutputPath(outputPath, defaultFilename) {
+  if (outputPath) {
+    return isAbsolute(outputPath) ? outputPath : join(process.cwd(), outputPath)
+  }
+  return join(homedir(), "Downloads", defaultFilename)
+}
+
+server.registerTool(
+  "export_pain_card",
+  {
+    description:
+      "Export a pain card as Markdown, JSON, or PDF — using the same render as the website. " +
+      "For md/json the content is returned as text in the response (unless output_path is given). " +
+      "For pdf the file is saved to output_path (default ~/Downloads/painradar-<slug>-<date>.pdf) " +
+      "and the saved path + byte size are returned. Use when the user wants to save, share, " +
+      "or print a pain card for offline reading or briefing materials.",
+    inputSchema: {
+      id: z.union([z.string(), z.number()]).describe("Pain card ID"),
+      format: z.enum(["md", "pdf", "json"]).describe("Export format"),
+      output_path: z
+        .string()
+        .optional()
+        .describe(
+          "Optional file path to save the export. For PDF the default is " +
+          "~/Downloads/painradar-<slug>-<date>.pdf. Absolute paths are used as-is; " +
+          "relative paths are resolved against the current working directory."
+        )
+    }
+  },
+  async ({ id, format, output_path }) => {
+    try {
+      const path = `/pains/${encodeURIComponent(String(id))}/export.${format}`
+      const res = await fetch(`${API_BASE}${path}`, {
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          "User-Agent": `vettedgaps-skill-mcp/${version}`,
+          Accept: "*/*"
+        }
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        return errResp(
+          `export_pain_card failed: HTTP ${res.status} ${res.statusText}: ${text.slice(0, 500)}`
+        )
+      }
+
+      const filename =
+        parseFilenameFromContentDisposition(res.headers.get("content-disposition")) ||
+        `painradar-${id}.${format}`
+
+      if (format === "pdf") {
+        const targetPath = resolveOutputPath(output_path, filename)
+        mkdirSync(dirname(targetPath), { recursive: true })
+        const buffer = Buffer.from(await res.arrayBuffer())
+        writeFileSync(targetPath, buffer)
+        return ok({ saved_to: targetPath, size_bytes: buffer.length, format: "pdf" })
+      }
+
+      const text = await res.text()
+      if (output_path) {
+        const targetPath = resolveOutputPath(output_path, filename)
+        mkdirSync(dirname(targetPath), { recursive: true })
+        writeFileSync(targetPath, text)
+        return ok({ saved_to: targetPath, size_bytes: text.length, format })
+      }
+      return ok({ format, content: text })
+    } catch (e) {
+      return errResp(`export_pain_card failed: ${e.message}`)
     }
   }
 )

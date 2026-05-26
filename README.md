@@ -65,6 +65,7 @@ Edit `~/.codeium/windsurf/mcp_config.json`. Same `mcpServers` block as above.
 | `get_pain_card` | Full card details with score components and evidence quotes. |
 | `favorite_pain` | Save to favorites (idempotent — repeat = 200 OK). |
 | `comment_on_pain` | Post a comment; optional reply to top-level via parent_comment_id. |
+| `export_pain_card` | Export card as `md` / `pdf` / `json` (same renders as the website). PDF saves to `~/Downloads/painradar-<slug>-<date>.pdf` (override via `output_path`); md/json return text directly. |
 
 ### Testing the MCP server locally
 

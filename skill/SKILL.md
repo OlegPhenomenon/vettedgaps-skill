@@ -12,7 +12,7 @@ Every request MUST include these headers:
 
 ```
 Authorization: Bearer ${VETTED_GAPS_TOKEN}
-User-Agent: vettedgaps-skill/0.3.0
+User-Agent: vettedgaps-skill/0.4.0
 Accept: application/json
 ```
 
@@ -113,7 +113,7 @@ Each returns the body with `Content-Disposition: attachment; filename="painradar
 **Markdown** (for AI briefings, internal docs):
 ```bash
 curl -H "Authorization: Bearer $VETTED_GAPS_TOKEN" \
-     -H "User-Agent: vettedgaps-skill/0.3.0" \
+     -H "User-Agent: vettedgaps-skill/0.4.0" \
      -o /tmp/painradar-310.md \
      https://vettedgaps.com/api/v1/pains/310/export.md
 ```
@@ -121,7 +121,7 @@ curl -H "Authorization: Bearer $VETTED_GAPS_TOKEN" \
 **PDF** (for sharing, reading offline, printing):
 ```bash
 curl -H "Authorization: Bearer $VETTED_GAPS_TOKEN" \
-     -H "User-Agent: vettedgaps-skill/0.3.0" \
+     -H "User-Agent: vettedgaps-skill/0.4.0" \
      -o ~/Downloads/painradar-310.pdf \
      https://vettedgaps.com/api/v1/pains/310/export.pdf
 ```
@@ -129,7 +129,7 @@ curl -H "Authorization: Bearer $VETTED_GAPS_TOKEN" \
 **JSON** (structured export with `export_version`, `pain_card`, evidence array):
 ```bash
 curl -H "Authorization: Bearer $VETTED_GAPS_TOKEN" \
-     -H "User-Agent: vettedgaps-skill/0.3.0" \
+     -H "User-Agent: vettedgaps-skill/0.4.0" \
      -o /tmp/painradar-310.json \
      https://vettedgaps.com/api/v1/pains/310/export.json
 ```

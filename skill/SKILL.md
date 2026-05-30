@@ -151,6 +151,82 @@ Body:
 
 `parent_comment_id` (optional) — for a reply, must reference an existing top-level (not-reply) comment on the same card. Returns `201 Created` with `{data: {id, body, body_html, created_at, parent_comment_id}}`.
 
+## Cross-platform marketplace gaps
+
+A second, complementary angle on opportunities. Operations 1–5 above mine **real user complaints** (the *primary* signal). These three compare the *app catalogs* of two platforms **semantically** (pure vector math, no LLM): a feature offered by many apps on platform A but by **nobody** on platform B is validated, unmet demand on B.
+
+Use pains as the main source of truth; use gaps as a supporting signal to size and locate demand. Same auth, error envelope and 60 req/min rate limit as above.
+
+### 6. List comparable platforms
+
+`GET https://vettedgaps.com/api/v1/marketplace_gaps/platforms`
+
+No parameters. Returns the platforms you may compare (only crawled ones), with app counts. **Call this first** so you use valid slugs.
+
+```json
+{ "data": [ { "slug": "monday", "name": "Monday", "apps_count": 1217 }, { "slug": "atlassian", "name": "Atlassian", "apps_count": 7278 } ] }
+```
+
+### 7. Compare two platforms
+
+`GET https://vettedgaps.com/api/v1/marketplace_gaps/compare?a=<slug>&b=<slug>`
+
+Query parameters:
+
+| Param | Type | Description |
+|---|---|---|
+| `a` | string | **Required.** Platform A slug. |
+| `b` | string | **Required.** Platform B slug (must differ from `a`). |
+| `per_page` | int | Gaps per direction per page (default 50, max 100). |
+| `cursor` | opaque | Pagination cursor from previous `meta.next_cursor`. |
+
+Returns **both directions in one response**: `gaps_a_to_b` (features in A missing from B) and `gaps_b_to_a` (the reverse).
+
+```json
+{
+  "data": {
+    "a": { "slug": "monday", "name": "Monday" },
+    "b": { "slug": "asana", "name": "Asana" },
+    "gaps_a_to_b": [
+      {
+        "feature_text": "Two-way Google Calendar sync",
+        "source_apps": [ { "name": "CalSync", "url": "https://..." } ],
+        "popularity": { "installs": 678, "rating": 5.0, "reviews_count": 12 },
+        "covered_natively": false
+      }
+    ],
+    "gaps_b_to_a": []
+  },
+  "meta": {
+    "per_page": 50,
+    "total_a_to_b": 6173,
+    "total_b_to_a": 87,
+    "has_more": true,
+    "next_cursor": "eyJhIjo1MCwiYiI6NTB9"
+  }
+}
+```
+
+`popularity` is `null` when the platform publishes no metrics. `covered_natively` is present only when native-coverage data exists for the target platform.
+
+**Pagination:** both directions are paginated independently behind one `cursor`. Totals (`total_a_to_b`/`total_b_to_a`) can be in the thousands — never try to pull everything; show the top gaps plus the totals. To page through, repeat with `cursor=meta.next_cursor` until `meta.has_more` is `false`.
+
+### 8. Lookup a plugin across platforms
+
+`GET https://vettedgaps.com/api/v1/marketplace_gaps/lookup?q=<text>`
+
+Text-searches features by name (`q` required), then finds the nearest semantic match on every *other* platform. Use to check whether an idea already exists elsewhere. No pagination (fixed top matches).
+
+```json
+{
+  "data": {
+    "results": [
+      { "query_feature": "time tracking", "platform": { "slug": "asana", "name": "Asana" }, "closest_match": "Time tracker KosmoTime", "app_name": "KosmoTime", "popularity": null }
+    ]
+  }
+}
+```
+
 ## Error envelope
 
 All errors return JSON of shape:
@@ -193,3 +269,10 @@ You should:
 You should:
 1. `POST /api/v1/pains/310/comments` with `{"body": "investigating this for a chrome extension"}`.
 2. Show the created comment ID.
+
+**User**: "what do monday apps offer that asana apps don't?"
+
+You should:
+1. `GET /api/v1/marketplace_gaps/platforms` to confirm `monday` and `asana` exist.
+2. `GET /api/v1/marketplace_gaps/compare?a=monday&b=asana&per_page=20`.
+3. Summarize the top `gaps_a_to_b` (feature, which apps offer it, popularity) and quote `meta.total_a_to_b` so the user knows how many more exist. Treat it as a demand signal, then cross-reference with `search_pains` for matching user complaints.

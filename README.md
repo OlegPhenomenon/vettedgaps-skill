@@ -66,6 +66,9 @@ Edit `~/.codeium/windsurf/mcp_config.json`. Same `mcpServers` block as above.
 | `favorite_pain` | Save to favorites (idempotent — repeat = 200 OK). |
 | `comment_on_pain` | Post a comment; optional reply to top-level via parent_comment_id. |
 | `export_pain_card` | Export card as `md` / `pdf` / `json` (same renders as the website). PDF saves to `~/Downloads/painradar-<slug>-<date>.pdf` (override via `output_path`); md/json return text directly. |
+| `list_marketplace_platforms` | List platforms available for cross-platform gap analysis, with app counts. Call before `compare_marketplaces`. |
+| `compare_marketplaces` | Semantic feature-gap diff between two platforms (both directions, paginated). Demand signal — secondary to pains. |
+| `lookup_marketplace_plugin` | Find the nearest matching feature on every other platform for a given plugin/feature name. |
 
 ### Testing the MCP server locally
 
@@ -100,6 +103,9 @@ Underlying API:
 - `GET https://vettedgaps.com/api/v1/pains/:id` — get card with evidence
 - `POST https://vettedgaps.com/api/v1/favorites` — save (idempotent)
 - `POST https://vettedgaps.com/api/v1/pains/:id/comments` — comment (with optional `parent_comment_id` for replies)
+- `GET https://vettedgaps.com/api/v1/marketplace_gaps/platforms` — platforms available for comparison
+- `GET https://vettedgaps.com/api/v1/marketplace_gaps/compare?a=&b=` — semantic feature-gap diff (both directions, paginated via `cursor`)
+- `GET https://vettedgaps.com/api/v1/marketplace_gaps/lookup?q=` — nearest feature match across other platforms
 
 Rate limit: 60 requests per minute per token. Error envelope: `{"error": {"code": "...", "message": "..."}}`.
 

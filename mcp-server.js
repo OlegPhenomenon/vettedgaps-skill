@@ -232,4 +232,69 @@ server.registerTool(
   }
 )
 
+server.registerTool(
+  "list_marketplace_platforms",
+  {
+    description:
+      "List marketplace platforms available for cross-platform gap analysis (monday, asana, " +
+      "notion, atlassian, etc), with how many apps each has. Call this FIRST before compare_marketplaces " +
+      "so you use valid slugs.",
+    inputSchema: {}
+  },
+  async () => {
+    try {
+      return ok(await api(`/marketplace_gaps/platforms`))
+    } catch (e) {
+      return errResp(`list_marketplace_platforms failed: ${e.message}`)
+    }
+  }
+)
+
+server.registerTool(
+  "compare_marketplaces",
+  {
+    description:
+      "Cross-platform feature gap analysis: compare two platforms' app catalogs semantically (no LLM). " +
+      "Returns both directions — gaps_a_to_b (features common on A but missing on B) and gaps_b_to_a. " +
+      "A feature many apps offer on one platform but nobody offers on the other is validated, unmet demand. " +
+      "This is a SECONDARY signal — the primary one is real user pains (search_pains). Totals can be thousands; " +
+      "paginate with cursor from meta.next_cursor, don't pull everything.",
+    inputSchema: {
+      a: z.string().describe("Platform A slug (from list_marketplace_platforms)"),
+      b: z.string().describe("Platform B slug, must differ from a"),
+      per_page: z.number().int().min(1).max(100).optional().describe("Gaps per direction per page, default 50, max 100"),
+      cursor: z.string().optional().describe("Pagination cursor from previous response's meta.next_cursor")
+    }
+  },
+  async (input) => {
+    try {
+      const qs = new URLSearchParams()
+      for (const [k, v] of Object.entries(input)) if (v !== undefined) qs.set(k, String(v))
+      return ok(await api(`/marketplace_gaps/compare?${qs}`))
+    } catch (e) {
+      return errResp(`compare_marketplaces failed: ${e.message}`)
+    }
+  }
+)
+
+server.registerTool(
+  "lookup_marketplace_plugin",
+  {
+    description:
+      "Look up where a plugin/feature's capabilities live across platforms: text-search by feature name, " +
+      "then nearest semantic match on every other platform (no LLM). Use to check whether an idea already " +
+      "exists elsewhere before building it.",
+    inputSchema: {
+      q: z.string().min(1).describe("Plugin or feature name / capability, e.g. 'time tracking'")
+    }
+  },
+  async ({ q }) => {
+    try {
+      return ok(await api(`/marketplace_gaps/lookup?q=${encodeURIComponent(q)}`))
+    } catch (e) {
+      return errResp(`lookup_marketplace_plugin failed: ${e.message}`)
+    }
+  }
+)
+
 await server.connect(new StdioServerTransport())
